@@ -12,7 +12,7 @@ from FINRA_Scrape import search_webpage
 
 #load the workbook and sheet
 workbook_path = "K:\\Market Maps\\Interest Rates Map.xlsm"
-output_workbook_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\Save and Rename Files\FINRA_Check_Output_Book.xlsx"
+output_workbook_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\WebScrapers\WebScrapers\workbooks\FINRA_Check_Output_Book.xlsx"
 sheet_name = "Master"
 table_name = "Master"
 wb = openpyxl.load_workbook(workbook_path, data_only=True)
@@ -45,7 +45,6 @@ for row in sheet.iter_rows(min_row=2, values_only=True): #need to check this to 
             output = search_webpage(finra_id)
             time_of_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-
         # Create a dictionary for the row
         result_row = {
             "Map Firm": row[column_headers['Firm']],
@@ -78,8 +77,7 @@ output_wb.close()
 wb.close()
 
 #Path to the macro book
-Macro_wb_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\Save and Rename Files\FINRA_IRM_Report_Macro_Book.xlsm"
-
+Macro_wb_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\WebScrapers\WebScrapers\workbooks\FINRA_IRM_Report_Macro_Book.xlsm"
 # Macro names
 AFR_Macro = 'Attach_FINRA_Report.CreateEmailFromData'
 Refresh_Macro = 'RefreshConnections.RefreshAllConnections'

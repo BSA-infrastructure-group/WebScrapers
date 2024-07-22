@@ -2,6 +2,8 @@ import openpyxl
 from openpyxl.utils.cell import range_boundaries
 from datetime import datetime, timedelta
 
+'This is a new line designed to test our git push'
+
 def get_column_headers(workbook_path, sheet_name, table_name):
     """
     Returns a dictionary mapping header names to column indices for a specified table in an Excel workbook.

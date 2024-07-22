@@ -11,33 +11,43 @@ from Generate_Header_Dictionary import get_column_headers
 from FINRA_Scrape import search_webpage
 
 #load the workbook and sheet
-workbook_path = "K:\\Market Maps\\Interest Rates Map.xlsm"
-output_workbook_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\WebScrapers\WebScrapers\workbooks\FINRA_Check_Output_Book.xlsx"
+workbook_path = r"K:\Market Maps\Interest Rates Map.xlsm"
+output_workbook_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\WebScrapers\WebScrapers\workbooks\FINRA_Check_Output_Book.xlsm"
 sheet_name = "Master"
 table_name = "Master"
 wb = openpyxl.load_workbook(workbook_path, data_only=True)
 sheet = wb[sheet_name]
 
-location_search_value = "New York, NY"
-function_search_value = "Trading"
-firm_search_value = "Morgan Stanley"
+# Prompt the user for search values
+location_search_value = input("Enter the location search value (e.g., 'New York, NY'): ").strip()
+function_search_value = input("Enter the function search value (e.g., 'Trading'): ").strip()
+firm_search_value = input("Enter the firm search value (e.g., 'Goldman Sachs'): ").strip()
+
 #group_search_value = "Interest Rate Swaps" #Add this line back in if you want to filter by group
 
 # Get column headers
 column_headers = get_column_headers(workbook_path, sheet_name, table_name)
 
+print("Column Headers:", column_headers)
+
 # Initialize an empty list to store the results
 results = []
 
 for row in sheet.iter_rows(min_row=2, values_only=True): #need to check this to make sure that we are starting in the correct first row of the table
+    
     #Check for specified conditions
     if row[column_headers['Location']] == location_search_value and \
-        row[column_headers['Group']] == firm_search_value and \
+        row[column_headers['Firm']] == firm_search_value and \
         row[column_headers['Function']] == function_search_value:
          
+        # Print confirmation of match
+        print("Match found for row:", row)
+
         #row[column_headers['Group']] == group_search_value and \ 'add this line back in if you want to filter by group
         
         finra_id = str(row[column_headers['FINRA ID']])
+        print("FINRA ID:", finra_id)
+
         if not finra_id.isdigit():
             output = "No ID"
             time_of_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -78,6 +88,7 @@ wb.close()
 
 #Path to the macro book
 Macro_wb_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\WebScrapers\WebScrapers\workbooks\FINRA_IRM_Report_Macro_Book.xlsm"
+
 # Macro names
 AFR_Macro = 'Attach_FINRA_Report.CreateEmailFromData'
 Refresh_Macro = 'RefreshConnections.RefreshAllConnections'

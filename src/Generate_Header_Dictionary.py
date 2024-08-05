@@ -44,4 +44,3 @@ def get_column_headers(workbook_path, sheet_name, table_name):
 
 #table_headers = get_column_headers(r"K:\Market Maps\Interest Rates Map.xlsm", "Master", "Master")
 #print(table_headers)
-

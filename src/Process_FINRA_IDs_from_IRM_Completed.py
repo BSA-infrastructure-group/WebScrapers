@@ -9,64 +9,82 @@ import traceback
 import time
 from Generate_Header_Dictionary import get_column_headers
 from FINRA_Scrape import search_webpage
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+start_time = time.time()
+
+try:
+    excel_app = win32.Dispatch("Excel.Application")
+    excel_app.Visible = True
+    print("Excel Application Initialized Successfully")
+except Exception as e:
+    print(f"Error initializing Excel Application: {e}")
+
 
 #load the workbook and sheet
 workbook_path = r"K:\Market Maps\Interest Rates Map.xlsm"
-output_workbook_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\WebScrapers\WebScrapers\workbooks\FINRA_Check_Output_Book.xlsm"
+output_workbook_path = r"C:\Users\Bay Street - Larry B\Documents\Brielle\Programming\Projects\WebScrapers\workbooks\FINRA_Check_Output_Book.xlsm"
 sheet_name = "Master"
 table_name = "Master"
 wb = openpyxl.load_workbook(workbook_path, data_only=True)
 sheet = wb[sheet_name]
 
-# Prompt the user for search values
-location_search_value = input("Enter the location search value (e.g., 'New York, NY'): ").strip()
-function_search_value = input("Enter the function search value (e.g., 'Trading'): ").strip()
-firm_search_value = input("Enter the firm search value (e.g., 'Goldman Sachs'): ").strip()
-
 #group_search_value = "Interest Rate Swaps" #Add this line back in if you want to filter by group
+
+
+def process_row(row, column_headers):
+    finra_id = str(row[column_headers['FINRA ID']])
+    
+    #Check for specified conditions
+    if finra_id.isdigit():
+        output = search_webpage(finra_id)
+        equivalent = False
+
+        # Correct syntax differences
+        if row[column_headers['Firm']][:4].lower() == output[:4].lower():
+            equivalent = True
+        elif row[column_headers['Firm']] == "Bank of America" and output == "BOFA SECURITIES, INC.":
+            equivalent = True
+        elif row[column_headers['Firm']][:7] == "Societe" and output == "SG AMERICAS SECURITIES, LLC":
+            equivalent = True
+        elif row[column_headers['Firm']][:3] == "JPM" and output[:4] == "J.P.":
+            equivalent = True
+        elif row[column_headers['Firm']] == "Pending" and output == "Inactive":
+            equivalent = True
+
+        # Check if firm is the same as on file
+        if row[column_headers['Firm']].lower() != output.lower() and equivalent != True:
+            time_of_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Create a dictionary for the row
+            return {
+                "Map Firm": row[column_headers['Firm']],
+                "Name": row[column_headers['Name']],
+                "Title": row[column_headers['Title']],
+                "Function": row[column_headers['Function']],
+                "Group": row[column_headers['Group']],
+                "FINRA ID": finra_id,
+                "Output": output,
+                "Time of Check": time_of_check
+            }
+    return None
+
 
 # Get column headers
 column_headers = get_column_headers(workbook_path, sheet_name, table_name)
 
-print("Column Headers:", column_headers)
-
 # Initialize an empty list to store the results
 results = []
 
-for row in sheet.iter_rows(min_row=2, values_only=True): #need to check this to make sure that we are starting in the correct first row of the table
-    
-    #Check for specified conditions
-    if row[column_headers['Location']] == location_search_value and \
-        row[column_headers['Firm']] == firm_search_value and \
-        row[column_headers['Function']] == function_search_value:
-         
-        # Print confirmation of match
-        print("Match found for row:", row)
 
-        #row[column_headers['Group']] == group_search_value and \ 'add this line back in if you want to filter by group
-        
-        finra_id = str(row[column_headers['FINRA ID']])
-        print("FINRA ID:", finra_id)
-
-        if not finra_id.isdigit():
-            output = "No ID"
-            time_of_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            output = search_webpage(finra_id)
-            time_of_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Create a dictionary for the row
-        result_row = {
-            "Map Firm": row[column_headers['Firm']],
-            "Name": row[column_headers['Name']],
-            "Title": row[column_headers['Title']],
-            "Function": row[column_headers['Function']],
-            "Group": row[column_headers['Group']],
-            "FINRA ID": finra_id,
-            "Output": output,
-            "Time of Check": time_of_check
-        }
-        results.append(result_row)
+# Process rows using ThreadPoolExecutor
+with ThreadPoolExecutor(max_workers=8) as executor:
+    futures = [executor.submit(process_row, row, column_headers) for row in sheet.iter_rows(min_row=2, values_only=True)]
+    for future in as_completed(futures):
+        result = future.result()
+        if result:
+            results.append(result)
 
 #Create a new workbook for output
 output_wb = openpyxl.Workbook()
@@ -87,7 +105,7 @@ output_wb.close()
 wb.close()
 
 #Path to the macro book
-Macro_wb_path = r"C:\Users\BSA-OliverJ'22\OneDrive\Desktop\OneDrive\Programming\Projects\WebScrapers\WebScrapers\workbooks\FINRA_IRM_Report_Macro_Book.xlsm"
+Macro_wb_path = r"C:\Users\Bay Street - Larry B\Documents\Brielle\Programming\Projects\WebScrapers\workbooks\Copy of FINRA_IRM_Report_Macro_Book.xlsm"
 
 # Macro names
 AFR_Macro = 'Attach_FINRA_Report.CreateEmailFromData'
@@ -124,7 +142,6 @@ finally:
     # Cleanup the COM object
     del excel_app
 
-
-
-
-
+end_time = time.time()
+runtime = end_time - start_time
+print(f"Script completed in {runtime:.2f} seconds")

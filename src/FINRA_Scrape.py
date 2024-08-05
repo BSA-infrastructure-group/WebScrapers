@@ -4,6 +4,7 @@ Bonus points if I can identify what firm they are registered with
 
 Column names are FINRA and FINRA Status
 """
+from multiprocessing import Pool
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -13,9 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, WebDriverException, TimeoutException
 
 def search_webpage(search_query):
-    url = "https://brokercheck.finra.org/search/genericsearch/grid"
-    inputbox_xpath = "/html/body/bc-root/div/bc-home-page/div[1]/div[3]/investor-tools-finder/div[2]/form[1]/div/div[1]/input"
-    button_arialabel = "button[aria-label='more details']"
+    url = "https://brokercheck.finra.org/individual/summary/" + search_query
     span_class = "text-primary-60 font-semibold"
     
     try:
@@ -23,18 +22,6 @@ def search_webpage(search_query):
         driver.get(url)
 
         try:
-            search_box = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, inputbox_xpath))
-            )
-            search_box.send_keys(search_query)
-            search_box.send_keys(Keys.RETURN)
-
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, button_arialabel))
-            )
-            button = driver.find_element(By.CSS_SELECTOR, button_arialabel)
-            button.click()
-
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, span_class.replace(" ", ".")))
             )
@@ -49,6 +36,8 @@ def search_webpage(search_query):
             driver.quit()  # Close the browser in any case
     except WebDriverException:
         return "Error"
+
+
 
 #create test array / dictionary
 
